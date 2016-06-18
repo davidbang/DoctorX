@@ -98,12 +98,10 @@ checkDementia(testing)
 gmaps = googlemaps.Client(key='AIzaSyD2NVFv0HSTEnr0RSGkBAwLEi75Odh3rbU')
 
 
+
 # Request directions via public transit
 
-app = Flask(__name__)
 
-
-@app.route("/", methods=["POST"])
 def handle_data():
     form = cgi.FieldStorage()
     print "The user entered %s" % form.getvalue("uservalue")
@@ -125,19 +123,19 @@ def determineExpectedTime(start, end):
     return expectedMS
 
 
-def getDifferentOfExpected(someAndroidLocObject):
-    startLat=someAndroidLocObject[0]
-    startLong=someAndroidLocObject[1]
-    endLat=someAndroidLocObject[2]
-    endLong=someAndroidLocObject[3]
-    totalTime= someAndroidLocObject[4]
+def getDifferentOfExpected(Object):
+    startLat=Object[0]
+    startLong=Object[1]
+    endLat=Object[2]
+    endLong=Object[3]
+    totalTime= Object[4]
 
     if ((totalTime-(determineExpectedTime((startLat,startLong), (endLat, endLong))))/float(totalTime))>0.10:
        return 1
     else:
        return 0
 
-def handleDifferentTimes(someAndroidLocObject):
+def handleDifferentTimes(Object):
    with open("geolocData.json", "r") as infile:
         d=json.load(infile)
    d=d.append(getDifferentOfExpected(someAndroidLocalObject))
@@ -161,6 +159,3 @@ for j in range(2):
 ax2.legend()
 
 plt.savefig('foo.png')
-
-if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=int("5000"))
