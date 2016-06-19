@@ -8,6 +8,9 @@ import cgi
 import matplotlib
 import matplotlib.pyplot as plt
 import random
+#import haven as hp
+#from havenondemand.hodclient import *
+
 
 
 THRESHHOLD_CONSTANT=0.2
@@ -22,6 +25,10 @@ with open("static/data.json", "r") as datafile:
 """Train cluster on past 1000 data points"""
 
 print "Building model..."
+
+#hp.connect()
+
+print "Connecting to HP. Training Model"
 
 def formatInput(inputList):
     inputFormatted = [None]*len(inputList)

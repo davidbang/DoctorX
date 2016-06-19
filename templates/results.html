@@ -32,6 +32,7 @@
 
     </ul>
     <ul class="nav navbar-nav navbar-right">
+     <li style="color:#FFA500"><a href="mappy" style="font-weight:bold;"><span class="glyphicon glyphicon-user"></span><b> Travel Reports</b></a></li>
       <li style="color:#FFA500"><a href="SMS" style="color:#FFA500;font-weight:bold;"><span class="glyphicon glyphicon-user"></span><b> SEND SMS</b></a></li>
       <li style="color:#FFA500"><a href="logout" style="font-weight:bold;"><span class="glyphicon glyphicon-user"></span><b> Logout</b></a></li>
 
@@ -121,6 +122,9 @@ Look at your reports below!!!
                      </div>
                   </a>
                 </article>
+    
+                </section>
+
                                 <!--
 
                 <article class="style5" style="width:100%">
@@ -163,22 +167,18 @@ Look at your reports below!!!
               </div>
             </div>
           </div>
--->
-        <!-- Footer -->
-          <footer id="footer" background="pics/background2.png">
-            <div class="inner">
-              
-            </div>
-          </footer>
 
       </div>
 
     <!-- Scripts -->
-      <script src="assets/js/jquery.min.js"></script>
-      <script src="assets/js/skel.min.js"></script>
-      <script src="assets/js/util.js"></script>
-      <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
-      <script src="assets/js/main.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.js"></script>
+    <script type="text/javascript">
+    $(document).ready(function() { // this runs as soon as the page is ready (DOM is loaded)
+       $("#mapy") // selecting "div" (you can also select the element by its id or class like in css )
+    .load("esri.html") // load in the file specified
+    });
+</script>
+
 
   </body>
 </html>

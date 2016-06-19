@@ -13,6 +13,8 @@ client = TwilioRestClient(account_sid, auth_token)
 
 global Alz  
 Alz = [60.0,60.0]
+global mapindexing
+mapindexing = 0
 
 app=Flask(__name__)
 app.config['SECRET_KEY'] = "secret key"
@@ -192,6 +194,10 @@ def SMS():
     message = client.messages.create(to="+17183620636", from_="+16465863825",
         body=message)  
     return redirect("/results")
+
+@app.route("/mappy")
+def maps():
+    return render_template ("esri.html")
 
 
 @app.route("/logout")
