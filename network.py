@@ -88,4 +88,4 @@ class networkService(AGOL):
                 'startTime' : 1227663551096,
                 'directionsLengthUnits' : "esriNAUMiles" }
         jsonResponse = self.sendRequest(url, data)
-        return jsonResponse
+        return [jsonResponse, ay]

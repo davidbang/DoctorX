@@ -2,8 +2,17 @@ from flask import Flask,request,url_for,redirect,render_template, flash, session
 import json, urllib2
 from functools import wraps
 import db_helper as db
-'''import model as model'''
+import model as model
+import twilio.twiml
+from twilio.rest import TwilioRestClient
+import random
 
+account_sid = "AC26f1116a29d460e5dbfb4334d349f064"
+auth_token = "69ac4ba053aa357aa4c998681ef97e12"
+client = TwilioRestClient(account_sid, auth_token)
+
+global Alz  
+Alz = [60.0,60.0]
 
 app=Flask(__name__)
 app.config['SECRET_KEY'] = "secret key"
@@ -12,13 +21,14 @@ app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
 
 @app.route("/", methods = ["POST", "GET"])
-def index():
+def index():    
     return render_template ("index.html")
 
 
 
 @app.route("/login", methods = ["POST", "GET"])
 def login():
+    session.pop('username', None)
     if ('username' not in session):
         session ['username'] = None
     if (session.get('username') != None):
@@ -40,6 +50,7 @@ def login():
 
 @app.route("/register", methods = ["POST", "GET"])
 def register():
+    session.pop('username', None)
     if ('username' not in session):
         session ['username'] = None
     if (session.get('username') != None):
@@ -62,6 +73,25 @@ def register():
             return redirect ("/")
     return render_template ("register.html") #have a button that redirects to /
 
+
+@app.route("/profile2", methods = ["POST", "GET"])
+def profile2():
+    submit = request.args.get("submit")
+    if (submit == "Submit"):
+        does_account_exist = db.user_auth(username, password);
+        if (does_account_exist == True):
+            user = db.get_all_user_data (username)
+            session ['username'] = username
+            return redirect("/profile/" + str(username))
+    update = request.args.get("Update")
+    if (update == "Update"):
+        return redirect("/profileupdate/" + str(username))
+    diagnosis = request.args.get("Diagnosis")
+    if (diagnosis == "Diagnosis"):
+        return redirect("/analysis")
+
+    return render_template ("profile.html")
+
 @app.route("/profile/<username>", methods = ["POST", "GET"])
 def profile(username):
     if (username == None):
@@ -74,70 +104,94 @@ def profile(username):
             myprofile = True
         else:
             myprofile = False
-        
-        if (submit == "submit"):
-            if (len(l) == 1 and ' ' in l[0]):
-                flash("Invalid frees, please separate frees by commas")
-                return redirect("/profile/" + str(username))
-            l2 = []
-            for item in l:
-                l2.append(item.strip())
-            err = False
-            try:
-                for item in l2:
-                    i = int(item)
-                    if (i < 1 or i > 10):
-                        err = True
-            except:
-                flash("Invalid frees, must be numbers")
-                return redirect("/profile/" + str(username))
-            if err:
-                flash("Invalid frees, must be between 1 and 10")
-                return redirect("/profile/" + str(username))
-            db.change_frees(username, frees)
+    submit = request.args.get("submit")
+    if (submit == "Submit"):
+        does_account_exist = db.user_auth(username, password);
+        if (does_account_exist == True):
+            user = db.get_all_user_data (username)
+            session ['username'] = username
             return redirect("/profile/" + str(username))
-        if (submit1 == "submit"):
-            lunch = request.args.get("lname")
-            try:
-                lunch = int(lunch)
-                if (lunch < 4 or lunch > 8):
-                    flash("Invalid lunch")
-                    return redirect("/profile/" + str(username))
-            except:
-                flash("Invalid lunch")
-                return redirect("/profile/" + str(username))
-            db.change_lunch(username, lunch)
-            return redirect("/profile/" + str(username))
+    update = request.args.get("Update")
+    if (update == "Update"):
+        return redirect("/profileupdate/" + str(username))
+    diagnosis = request.args.get("Diagnosis")
+    if (diagnosis == "Diagnosis"):
+        return redirect("/analysis")
 
-            
-        return render_template ("profile.html", myprofile = myprofile, username2 = username2, data = data)
-    else:
-        flash ("You are not logged in")
-        return redirect ("/")
+    return render_template ("profile.html")
+
+@app.route("/profileupdate/<username>", methods = ["POST", "GET"])
+def profileupdate(username):
+    if (username == None):
+        flash("invalid page")
+        return redirect("/")
+    if ('username' in session):
+        username2 = session ['username']
+        data = db.get_all_user_data (username)
+        if (username == username2):
+            myprofile = True
+        else:
+            myprofile = False
+    submit = request.args.get("Update")
+    if (submit == "Update"):
+        '''username = request.args.get("username")
+        password = request.args.get("password")'''
+        return redirect("/profile/"+ str(username))
+    return render_template ("profileupdate.html")
 
 
 @app.route("/analysis")
 def analysis():
+    print "Running Model...."
+    Alz = model.runModel()
+    print "Running Model"
     if ('username' not in session):
         session ['username'] = None
     if (session.get('username') == None):
-        return redirect("/")
-    username = session ['username']
-    if (analyze == "analyze"):
-        return redirect("/")
-
-
-    return render_template ("analysis.html", username = username)
+        username = session ['username']
+    results = request.args.get("Results")
+    if (results == "Results"):
+        return redirect("/results")
+    return render_template("analysis.html")
 
 
 @app.route("/results")
 def results():
-    return render_template ("results.html", username = username)
+    xcoeff = 1 - Alz[0]
+    ycoeff = 1- Alz[1]
+    weight = 0.43 * xcoeff + 0.57 * ycoeff
+    age = 59 
+    probabilty = random.gauss(59, 7 * weight)
+    if probabilty > 40.0:
+        message = "Doctor!!!! Hermione has a high chance of having Alzheimer's!"
+    else:
+        message = "Doctor!!!! Hermione has a chance of having Alzheimer's!"
 
+    SMS = request.args.get("sendSMS")
+    if (SMS == "sendSMS"):
+        message = client.messages.create(to="+17183620636", from_="+16465863825",
+            body=message)  
+        return redirect("/results")
 
-@app.route("/visuals")
-def visuals():
-    return render_template ("visuals.html", username = username)
+    return render_template ("results.html", message=message)
+
+@app.route("/SMS")
+def SMS():
+    xcoeff = 1 - Alz[0]
+    ycoeff = 1- Alz[1]
+    weight = 0.43 * xcoeff + 0.57 * ycoeff
+    age = 59 
+    probabilty = random.gauss(59, 7 * weight)
+    if probabilty > 40.0:
+        message = "Doctor!!!! Hermione has a high chance of having Alzheimer's!"
+    else:
+        message = "Doctor!!!! Hermione has a chance of having Alzheimer's!"
+
+    SMS = request.args.get("sendSMS")
+    
+    message = client.messages.create(to="+17183620636", from_="+16465863825",
+        body=message)  
+    return redirect("/results")
 
 
 @app.route("/logout")
@@ -150,4 +204,4 @@ def logout():
 
 if __name__ == '__main__':
     app.debug = False
-    app.run(host = '0.0.0.0', port=8000)
+    app.run(host = '0.0.0.0', port=8023)
