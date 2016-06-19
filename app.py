@@ -2,7 +2,7 @@ from flask import Flask,request,url_for,redirect,render_template, flash, session
 import json, urllib2
 from functools import wraps
 import db_helper as db
-import model as model
+'''import model as model'''
 
 
 app=Flask(__name__)
@@ -13,18 +13,7 @@ app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
 @app.route("/", methods = ["POST", "GET"])
 def index():
-    if(request.method=="POST"):
-        submit = request.form["submit"]
-        if (submit == "Search"):
-            return redirect("/results")
-    if ('username' not in session or session.get('username') == None):
-        loggedin = False
-        return render_template ("index.html")
-    else:
-        loggedin = True
-        username2 = session.get('username')
-        print(orders2)
-        return render_template ("index.html")
+    return render_template ("index.html")
 
 
 
@@ -51,6 +40,8 @@ def login():
 
 @app.route("/register", methods = ["POST", "GET"])
 def register():
+    if ('username' not in session):
+        session ['username'] = None
     if (session.get('username') != None):
         flash ("You are already logged in!")
         return redirect ("/")
@@ -60,15 +51,15 @@ def register():
         password = request.args.get("password")
         does_account_exist = db.user_exists(username)
         if (does_account_exist):
-            flash("Account already exists") #tried registering with taken username (None, None) is not a valid user/pass combo
+            print("Failed 1")
             return redirect("/register")
         elif (len(username)<1):
-            flash("Username too short, must be at least 1 character") #username too short, None falls under here too
+            print("Failed 2")
             return redirect("/register")
         else:
             db.user_creat (username, password)
             flash("Successfully registered")
-            return redirect ("/index")
+            return redirect ("/")
     return render_template ("register.html") #have a button that redirects to /
 
 @app.route("/profile/<username>", methods = ["POST", "GET"])
@@ -158,5 +149,5 @@ def logout():
 
 
 if __name__ == '__main__':
-    app.debug = True
-    app.run(host = '0.0.0.0')
+    app.debug = False
+    app.run(host = '0.0.0.0', port=8000)
