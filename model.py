@@ -26,7 +26,7 @@ with open("static/data.json", "r") as datafile:
 
 print "Building model..."
 
-#hp.connect()
+#Shp.connect()
 
 print "Connecting to HP. Training Model"
 
