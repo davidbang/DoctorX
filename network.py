@@ -8,7 +8,7 @@ class networkService(AGOL):
 
     def routeNetwork(self):
         ax = 37.782
-        ay = random.gauss(ax, 0.015)
+        ay = ax + random.uniform(0.000010,0.01800)
         """
         This shows how to do a network solve using ArcGIS Online Routing services
         http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#/Solve_Route/02r3000000q3000000/

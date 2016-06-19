@@ -3,159 +3,468 @@ import skfuzzy
 import datetime
 import json
 import math
-import SimpleHTTPServer
-from googlemaps import convert
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-import SocketServer
-import googlemaps
 from datetime import datetime
-from flask import Flask, request
 import cgi
 import matplotlib
 import matplotlib.pyplot as plt
+import random
 
 
 THRESHHOLD_CONSTANT=0.2
 global testing
 global u
-
+global traintravel
+global trainspending2
 with open("static/data.json", "r") as datafile:
     testing= json.load(datafile)
 
-PORT = 5000
 
-
-
-"""JSON loads whatever  Parth sent"""
-
-"""Train cluster on past 500 data points"""
+"""Train cluster on past 1000 data points"""
 
 print "Building model..."
-
 
 def formatInput(inputList):
     inputFormatted = [None]*len(inputList)
     for i in xrange(len(inputList)):
         inputFormatted[i]=np.array(inputList[i])
-    print np.array(inputFormatted)
+    #print np.array(inputFormatted)
     return np.array(inputFormatted).T
 
-def getCenter(pieceStack):
-    center, u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans(
-        pieceStack, 2, 2, error=0.004, maxiter=5000)
-    return center
 
-def getU(pieceStack):
-    center, u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans(
-        pieceStack, 2, 2, error=0.004, maxiter=5000)
-    return u
-
-def predict(newPurchaseList, center):
-    u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(newPurchaseList, center, 2, error=0.003333, maxiter=2500)
-    return np.argmax(u, axis=0)
-
-def lastNs(formatting, n):
-    print (-n+1)
+def lastN(formatting, n):
+    #print (-n+1)
     return formatInput(formatting[-(n+1)::])
 
-#computes whether  dementia is increasing or decreasing beyond a certain threshold
-def deltaRate(someList):
-    return [scoreDeltaN(someList, int(math.pow((5),(i+1)))) for i  in range(0,5)]
 
-def getNumAlzheimers(someList):
-    getting=formatInput(someList)
-    u=getU(np.array(getting))
-    clusters= np.argmax(u, axis=0)
-    print
+with open("static/traintraveldata.json", "r") as datafile:
+    traintravel= json.load(datafile)
 
-def scoreDeltaN(someList, n):
-    lastN = lastNs(someList, n)
-    firstN = formatInput(someList[::n])
-    centers=getCenter(np.array(firstN))
-    centers=getCenter(np.array(lastN)) 
-    predictionsLast=predict(lastN, centers)
-    firstClassifications= predict(firstN, centers)
-    priorRate = np.sum(firstClassifications)/float(len(someList))
-    posteriorRate = np.sum(predictionsLast)/float(n)
-    return (posteriorRate-priorRate)
+traintravel2 = formatInput(traintravel)
+center,u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans(traintravel2, 4, 4, error=0.004, maxiter=5000)
 
 
-def checkDementia(inputList):
-    inputFormatted= formatInput(inputList)
-    center=getCenter(inputFormatted)
-    print "Delta  Rate: " + str(sum(deltaRate(inputList))/5.0)
-    print getNumAlzheimers(inputList)
-"""
-    last10=lastN(inputList, 10) 
-    last25= lastN(inputList, 25)
-    last50= lastN(inputList, 50)
-    print predict(last10, center)"""
-    #sort numpy array
-    #grab 5, 25, 50 last purchases delta
-    #grab 
-checkDementia(testing)
+index = 0
+max = 0
+for i in range (0,4):
+    if center[i][1] > max:
+        index = i
+        max = center[i][1]
 
-gmaps = googlemaps.Client(key='AIzaSyD2NVFv0HSTEnr0RSGkBAwLEi75Odh3rbU')
+index2 = 0
+max = 0
+for i in range (0,4):
+    if center[i][1] > max and (not (index == i)):
+        index2 = i
+        max = center[i][1]
 
+a = traintravel2[1, u.argmax(axis=0) == index]
+b = traintravel2[1, u.argmax(axis=0) == index2]
 
-
-# Request directions via public transit
-
-
-def handle_data():
-    form = cgi.FieldStorage()
-    print "The user entered %s" % form.getvalue("uservalue")
-    print "Hello World - you sent me " + str(request.values)
-    return "Hello World - you sent me " + str(request.values)
-
-
-
-def determineExpectedTime(start, end):
-    now = datetime.now()
-    directions_result = gmaps.directions(start,
-                                     end,
-                                     mode="driving",
-                                     departure_time=now)
-    extracted=str(directions_result[0]["legs"][0]["duration_in_traffic"]["text"])
-   
-    expectedList = [int(s) for s in extracted.split() if s.isdigit()]
-    expectedMS = expectedList[0]*3600*1000+expectedList[1]*60*1000
-    return expectedMS
-
-
-def getDifferentOfExpected(Object):
-    startLat=Object[0]
-    startLong=Object[1]
-    endLat=Object[2]
-    endLong=Object[3]
-    totalTime= Object[4]
-
-    if ((totalTime-(determineExpectedTime((startLat,startLong), (endLat, endLong))))/float(totalTime))>0.10:
-       return 1
-    else:
-       return 0
-
-def handleDifferentTimes(Object):
-   with open("geolocData.json", "r") as infile:
-        d=json.load(infile)
-   d=d.append(getDifferentOfExpected(someAndroidLocalObject))
-   with open("geolocData.json", "w") as outfile:
-        outfile.write(json.dumps(d))
-   return sum(d)/float(len(d))
-
-print determineExpectedTime((38.927, -77.234),(36.284, -78.321))
-
-testing2 = np.array(formatInput(testing))
-
-center,u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans(testing2, 2, 2, error=0.004, maxiter=5000)
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+print lenbad
+print lenbad2
+percentagebad = float((lenbad + lenbad2) / 1000.0)
 
 
 fig2, ax2 = plt.subplots()
-ax2.set_title('Trained model')
-for j in range(2):
-    ax2.plot(testing2[0, u.argmax(axis=0) == j],
-             testing2[1, u.argmax(axis=0) == j], 'o',
-             label='series ' + str(j))
+ax2.set_title('Trained Travel Model')
+plt.ylabel('Actual Travel Time to Estimated Travel Time Ratio')
+plt.xlabel('Actual Travel Distance')
+for j in range(4):
+    if j == index or j == index2:
+        ax2.plot(traintravel2[0, u.argmax(axis=0) == j],
+             traintravel2[1, u.argmax(axis=0) == j], 'o',
+             label='Alzheimer Cluster ')
+    else:
+        ax2.plot(traintravel2[0, u.argmax(axis=0) == j],
+             traintravel2[1, u.argmax(axis=0) == j], 'o',
+             label='Normal Cluster ')
+
+
 ax2.legend()
 
-plt.savefig('foo.png')
+plt.savefig('trainedtravel.png')
+
+plt.clf()
+
+
+a = traintravel2[0, u.argmax(axis=0) == 1]
+
+
+with open("static/alzheimerstraveldata.json", "r") as datafile:
+    traintravel= json.load(datafile)
+
+counter = 0
+
+'''Start derivative block'''
+
+traintravel2 = lastN(traintravel, 800)
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+a = traintravel2[1, u.argmax(axis=0) == index]
+b = traintravel2[1, u.argmax(axis=0) == index2]
+
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+print percentagebad
+if (percentagebad < ((lenbad + lenbad2) / 800.0)):
+    counter += 1
+percentagebad = (lenbad + lenbad2) / 800.0
+print percentagebad
+
+
+traintravel2 = lastN(traintravel, 600)
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+a = traintravel2[1, u.argmax(axis=0) == index]
+b = traintravel2[1, u.argmax(axis=0) == index2]
+
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+if (percentagebad < ((lenbad + lenbad2) / 600.0)):
+    counter += 1
+percentagebad = (lenbad + lenbad2) / 600.0
+
+traintravel2 = lastN(traintravel, 500)
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+a = traintravel2[1, u.argmax(axis=0) == index]
+b = traintravel2[1, u.argmax(axis=0) == index2]
+
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+if (percentagebad < ((lenbad + lenbad2) / 500.0)):
+    counter += 1
+percentagebad = (lenbad + lenbad2) / 500.0
+
+
+traintravel2 = lastN(traintravel, 400)
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+a = traintravel2[1, u.argmax(axis=0) == index]
+b = traintravel2[1, u.argmax(axis=0) == index2]
+
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+if (percentagebad < ((lenbad + lenbad2) / 400.0)):
+    counter += 1
+percentagebad = (lenbad + lenbad2) / 400.0
+
+
+traintravel2 = lastN(traintravel, 300)
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+a = traintravel2[1, u.argmax(axis=0) == index]
+b = traintravel2[1, u.argmax(axis=0) == index2]
+
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+if (percentagebad < ((lenbad + lenbad2) / 300.0)):
+    counter += 1
+percentagebad = (lenbad + lenbad2) / 300.0
+
+
+
+traintravel2 = lastN(traintravel, 200)
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+
+a = traintravel2[1, u.argmax(axis=0) == index]
+b = traintravel2[1, u.argmax(axis=0) == index2]
+
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+if (percentagebad <((lenbad + lenbad2) / 200.0)):
+    counter += 2
+percentagebad = (lenbad + lenbad2) / 200.0
+
+
+traintravel2 = lastN(traintravel, 100)
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+a = traintravel2[1, u.argmax(axis=0) == index]
+b = traintravel2[1, u.argmax(axis=0) == index2]
+
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+if (percentagebad < ((lenbad + lenbad2) / 100.0)):
+    counter += 2
+percentagebad = (lenbad + lenbad2) / 100.0
+
+traintravel2 = lastN(traintravel, 50)
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+a = traintravel2[1, u.argmax(axis=0) == index]
+b = traintravel2[1, u.argmax(axis=0) == index2]
+
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+if (percentagebad < ((lenbad + lenbad2) / 50.0)):
+    counter += 3
+percentagebad = (lenbad + lenbad2) / 50.0
+
+traintravel2 = lastN(traintravel, 25)
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+a = traintravel2[1, u.argmax(axis=0) == index]
+b = traintravel2[1, u.argmax(axis=0) == index2]
+
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+if (percentagebad < ((lenbad + lenbad2) / 25.0)):
+    counter += 3
+percentagebad = (lenbad + lenbad2) / 25.0
+
+'''End derivative block'''
+
+scoretravel = random.gauss(counter/15.0, 0.05)
+
+print "SCORETRAVEL:" + str(scoretravel)
+
+traintravel2 = formatInput(traintravel)
+
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+
+cluster_membership = np.argmax(u, axis=0)  # Hardening for visualization
+traintravel2 = formatInput(traintravel2)
+fig3, ax3 = plt.subplots()
+ax3.set_title("Alzheimer's Travel Model")
+plt.ylabel('Actual Travel Time to Estimated Travel Time Ratio')
+plt.xlabel('Actual Travel Distance')
+for j in range(4):
+    if j == index or j == index2:
+        ax3.plot(traintravel2[cluster_membership == j, 0],
+                 traintravel2[cluster_membership == j, 1], 'o',
+                 label='Alzheimer Cluster ')
+    else:
+        ax3.plot(traintravel2[cluster_membership == j, 0],
+                traintravel2[cluster_membership == j, 1], 'o',
+                label='Normal Cluster ')
+ax3.legend()
+
+plt.savefig('alzheimerstravel.png')
+plt.clf()
+
+
+
+with open("static/trainspendingdata.json", "r") as datafile:
+    trainspending2 = json.load(datafile)
+
+
+trainspending3 = formatInput(trainspending2)
+center,u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans(trainspending3, 3, 3, error=0.004, maxiter=5000)
+
+
+index = 0
+max = 0
+for i in range (0,3):
+    if center[i][0] > max:
+        index = i
+        max = center[i][0]
+
+
+fig2, ax2 = plt.subplots()
+ax2.set_title('Trained Spending Model')
+plt.ylabel('Money Spent')
+plt.xlabel('Buying Index')
+for j in range(3):
+    if j == index:
+        ax2.plot(trainspending3[0, u.argmax(axis=0) == j],
+             trainspending3[1, u.argmax(axis=0) == j], 'o',
+             label='Alzheimer Cluster ')
+    else:
+        ax2.plot(trainspending3[0, u.argmax(axis=0) == j],
+             trainspending3[1, u.argmax(axis=0) == j], 'o',
+             label='Normal Cluster ')
+ax2.legend()
+
+plt.savefig('trainedspending.png')
+plt.clf()
+
+
+
+with open("static/alzheimersspendingdata.json", "r") as datafile:
+    trainspending2 = json.load(datafile)
+
+counter = 0
+
+'''Start derivative block'''
+
+traintravel2 = lastN(trainspending2, 450)
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+a = traintravel2[1, u.argmax(axis=0) == index]
+
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+if (percentagebad < (lenbad + lenbad2) / 450.0):
+    counter += 1
+percentagebad = (lenbad + lenbad2) / 450.0
+
+traintravel2 = lastN(trainspending2, 400)
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+a = traintravel2[1, u.argmax(axis=0) == index]
+
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+if (percentagebad < (lenbad + lenbad2) / 400.0):
+    counter += 1
+percentagebad = (lenbad + lenbad2) / 400.0
+
+traintravel2 = lastN(trainspending2, 300)
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+a = traintravel2[1, u.argmax(axis=0) == index]
+
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+if (percentagebad < (lenbad + lenbad2) / 300.0):
+    counter += 1
+percentagebad = (lenbad + lenbad2) / 300.0
+
+
+traintravel2 = lastN(trainspending2, 250)
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+a = traintravel2[1, u.argmax(axis=0) == index]
+
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+if (percentagebad < (lenbad + lenbad2) / 250.0):
+    counter += 1
+percentagebad = (lenbad + lenbad2) / 250.0
+
+
+traintravel2 = lastN(trainspending2, 200)
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+a = traintravel2[1, u.argmax(axis=0) == index]
+
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+if (percentagebad < (lenbad + lenbad2) / 200.0):
+    counter += 1
+percentagebad = (lenbad + lenbad2) / 200.0
+
+
+
+traintravel2 = lastN(trainspending2, 150)
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+
+a = traintravel2[1, u.argmax(axis=0) == index]
+
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+if (percentagebad <(lenbad + lenbad2) / 150.0):
+    counter += 2
+percentagebad = (lenbad + lenbad2) / 150.0
+
+
+traintravel2 = lastN(trainspending2, 100)
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+a = traintravel2[1, u.argmax(axis=0) == index]
+
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+if (percentagebad < (lenbad + lenbad2) / 100.0):
+    counter += 2
+percentagebad = (lenbad + lenbad2) / 100.0
+
+traintravel2 = lastN(trainspending2, 50)
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+a = traintravel2[1, u.argmax(axis=0) == index]
+
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+if (percentagebad < (lenbad + lenbad2) / 50.0):
+    counter += 3
+percentagebad = (lenbad + lenbad2) / 50.0
+
+traintravel2 = lastN(trainspending2, 20)
+
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    traintravel2, center, 8 , error=0.004, maxiter=5000)
+
+a = traintravel2[1, u.argmax(axis=0) == index]
+
+lenbad = len(a.tolist())
+lenbad2 = len(b.tolist())
+if (percentagebad < (lenbad + lenbad2) / 20.0):
+    counter += 3
+percentagebad = (lenbad + lenbad2) / 20.0
+
+'''End derivative block'''
+
+scorespending = random.gauss(counter/15.0, 0.05)
+
+print "SCORESPENDING:" + str(scorespending)
+
+
+trainspending3 = formatInput(trainspending2)
+u, u0, d, jm, p, fpc = skfuzzy.cluster.cmeans_predict(
+    trainspending3, center, 3 , error=0.004, maxiter=5000)
+
+fig2, ax2 = plt.subplots()
+ax2.set_title("Alzheimer's Spending Model")
+plt.ylabel('Money Spent')
+plt.xlabel('Buying Index')
+for j in range(3):
+    if j == index:
+        ax2.plot(trainspending3[0, u.argmax(axis=0) == j],
+             trainspending3[1, u.argmax(axis=0) == j], 'o',
+             label='Alzheimer Cluster ')
+    else:
+        ax2.plot(trainspending3[0, u.argmax(axis=0) == j],
+             trainspending3[1, u.argmax(axis=0) == j], 'o',
+             label='Normal Cluster ')
+ax2.legend()
+
+plt.savefig('alzheimerspending.png')
+plt.clf()
+
+
+
+
+
