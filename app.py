@@ -12,7 +12,7 @@ auth_token = "69ac4ba053aa357aa4c998681ef97e12"
 client = TwilioRestClient(account_sid, auth_token)
 
 global Alz  
-Alz = [60.0,60.0]
+Alz = [60.0,60.0, 1]
 global mapindexing
 mapindexing = 0
 
@@ -161,9 +161,18 @@ def analysis():
 def results():
     xcoeff = 1 - Alz[0]
     ycoeff = 1- Alz[1]
+    weight2 = Alz[2]
     weight = 0.43 * xcoeff + 0.57 * ycoeff
     age = 59 
-    probabilty = random.gauss(59, 7 * weight)
+    probabilty = 41.0
+    if weight2 == 1:
+        probabilty = random.gauss(80, 0.10 * weight)
+    if weight2 == 0:
+        probabilty = random.gauss((age - 10), 2 * weight)
+    if probabilty > 100.0:
+        probabilty = 93.23
+    fl = probabilty - 5.3
+    fm = probabilty + 3.5
     if probabilty > 40.0:
         message = "Doctor!!!! Hermione has a high chance of having Alzheimer's!"
     else:
@@ -175,19 +184,26 @@ def results():
             body=message)  
         return redirect("/results")
 
-    return render_template ("results.html", message=message)
+    return render_template ("results.html", message=message, probabilty = str(probabilty), fl = str(fl), fm = str(fm))
 
 @app.route("/SMS")
 def SMS():
     xcoeff = 1 - Alz[0]
     ycoeff = 1- Alz[1]
+    weight2 = Alz[2]
     weight = 0.43 * xcoeff + 0.57 * ycoeff
     age = 59 
-    probabilty = random.gauss(59, 7 * weight)
+    probabilty = 41.0
+    if weight2 == 1:
+        probabilty = random.gauss(age, 7 * weight)
+    if weight2 == 0:
+        probabilty = random.gauss((age - 10), 7 * weight)
     if probabilty > 40.0:
-        message = "Doctor!!!! Hermione has a high chance of having Alzheimer's!"
+        message = "Doctor!!!! Hermione has a high chance of having Alzheimer's Disease!"
+    elif probabilty > 20.0:
+        message = "Doctor!!!! Hermione has a chance of having Alzheimer's Disease!"
     else:
-        message = "Doctor!!!! Hermione has a chance of having Alzheimer's!"
+        message = "Doctor!!!! Hermione doesn't seem to have a high chance of having Alzheimer's Disease!"
 
     SMS = request.args.get("sendSMS")
     

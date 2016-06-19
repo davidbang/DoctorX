@@ -8,8 +8,8 @@ import cgi
 import matplotlib
 import matplotlib.pyplot as plt
 import random
-#import haven as hp
-#from havenondemand.hodclient import *
+import haven as hp
+from havenondemand.hodclient import *
 
 
 
@@ -26,9 +26,16 @@ with open("static/data.json", "r") as datafile:
 
 print "Building model..."
 
-#Shp.connect()
+#modelid = hp.connect()
 
-print "Connecting to HP. Training Model"
+#print "Connecting to HP. Training Model"
+
+prediction = hp.predict('alzheimerService', 60, 60)
+
+print prediction[u'file']
+
+if "True" in prediction[u'file']:
+    print "TRUE"
 
 def formatInput(inputList):
     inputFormatted = [None]*len(inputList)
@@ -474,4 +481,17 @@ def runModel():
 
     print "SCORE SPENDING:" + str(scorespending)
 
-    return [scoretravel, scorespending]
+    print "Connecting to HP Prediction Model"
+
+    scoretravel = int(scoretravel * 100)
+    scorespending = int(scorespending * 100)
+
+    prediction = hp.predict('alzheimerService', scoretravel, scorespending)
+    prediction = hp.predict('alzheimerService', 60, 60)
+
+    print prediction[u'file']
+    weight = 0
+    if "True" in prediction[u'file']:
+        weight = 1
+
+    return [scoretravel, scorespending, weight]
