@@ -1,4 +1,8 @@
 # DoctorX
+###AngelHack Brooklyn: Esri Prize Winner ($1000)
+##Summary
+ Won the Esri Prize of $1000 with DoctorX, a machine learning platform for assistance to Alzheimer patients and the elderly. Alzheimer patients typically have poor money management which leads to excessive spending and tend to get lost and wander while driving. DoctorX uses GPS data and debit/credit card transaction data to train a machine learning model (primarily using Fuzzy C-means clustering and an underlying Hidden Markov model) that will track and measure early signs of Alzheimer’s. By leveraging existing data, we can provide an almost invisible way for early detection and the monitoring of a patient’s Alzheimer’s. Datasets from debit and credit card providers and GPS tracking datasets from cell phone carriers are used to identify anomalous data for a patient and predict early signs of executive function degradation. With the classification of a high probability of early stage Alzheimer’s, the output of this analysis could be sent to the primary care physician. The physician could use this information to guide the discussion on potential cognitive treatment, which could reduce cognitive deficiencies, and financially planning for long term care.
+
 
 ##Inspiration
 Every second, massive amounts of digital data points are generated from our daily proceedings through credit card transactions and cellphone GPS locators. Countless more data remains uncollected. Recent advancements in machine learning have made it possible to use more than just aggregate data of large consumer population to improve early detection of diseases; early detection can occur faster and more reliably for Alzheimer’s patients.
